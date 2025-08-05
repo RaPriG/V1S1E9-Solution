@@ -3,29 +3,29 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-def get_phase_data(pressure: float):
-    if not (1 <= pressure <= 10):
-        return None
-
-    vc = 0.0035
-    vf_min = 0.0011
-    vg_max = 0.015
-    pc = 10
-    #Interpolación lineal (Buscando valor intermedio)
-    vf = vf_min + ((vc - vf_min) / (pc - 1)) * (pressure - 1)
-    vg = vg_max - ((vg_max - vc) / (pc - 1)) * (pressure - 1)
-
-    vf = round(vf, 6)
-    vg = round(vg, 6)
+def calcular_volumenes(pressure):
+    def getSpecificVolumes(pressure: float):
+        # Punto crítico
+        Pc = 10.0  # MPa
+        vc = 0.0035  # m³/kg
+        
+        if pressure >= Pc:
+         return round(vc, 6), round(vc, 6)
     
-    return {
-        "specific_volume_liquid": vf,
-        "specific_volume_vapor": vg
-    }
+        # Relación empírica solo para vapor
+        specific_volume_vapor = round(vc * (Pc / pressure) ** 3.0, 6)
+        
+        # Relación empírica para líquido (menos pronunciada)
+        specific_volume_liquid = round(vc * (pressure / Pc) ** 0.5, 6)
+
+
+        return round(specific_volume_liquid, 6), round(specific_volume_vapor, 6)
 
 @app.get("/phase-change-diagram")
-async def get_phase_change(pressure: float = Query(..., ge=1, le=10)):
-    data = get_phase_data(pressure)
-    if data:
-        return JSONResponse(content=data)
-    return JSONResponse(content={"error": "Pressure out of range"}, status_code=400)
+async def phase_change(pressure: float = Query(..., ge=1, le=10)):
+    result = calcular_volumenes(pressure)
+    if result:
+        vf, vg = result
+        return {"specific_volume_liquid": vf, "specific_volume_vapor": vg}
+    return JSONResponse(content={"error": "Invalid pressure"}, status_code=400)
+
