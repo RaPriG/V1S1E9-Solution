@@ -7,13 +7,12 @@ def get_phase_data(pressure: float):
     if not (1 <= pressure <= 10):
         return None
 
-    vc = 0.0035
-    vf_min = 0.0011
-    vg_max = 0.015
-    pc = 10
+    vc = 0.0035   # volumen crítico
+    delta = (10 - pressure) / 9  # valor que decrece de 1 a 0
 
-    vf = vf_min + ((vc - vf_min) / (pc - 1)) * (pressure - 1)
-    vg = vg_max - ((vg_max - vc) / (pc - 1)) * (pressure - 1)
+    # Aplicamos una interpolación simétrica
+    vf = vc - delta * (vc - 0.0011)
+    vg = vc + delta * (0.015 - vc)
 
     vf = round(vf, 6)
     vg = round(vg, 6)
