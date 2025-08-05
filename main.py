@@ -7,19 +7,17 @@ def get_phase_data(pressure: float):
     if not (1 <= pressure <= 10):
         return None
 
-    vc = 0.0035   # volumen crítico
-    delta = (10 - pressure) / 9  # valor que decrece de 1 a 0
+    vc = 0.0035  # volumen crítico en m^3/kg
 
-    # Aplicamos una interpolación simétrica
-    vf = vc - delta * (vc - 0.0011)
-    vg = vc + delta * (0.015 - vc)
+    # vf cambia poco con la presión, crecimiento lento
+    vf = 0.00105 + (vc - 0.00105) * ((10 - pressure) / 9) ** 0.3
 
-    vf = round(vf, 6)
-    vg = round(vg, 6)
-    
+    # vg crece mucho con baja presión (comportamiento no lineal)
+    vg = vc + (0.05 - vc) * ((10 - pressure) / 9) ** 2.2
+
     return {
-        "specific_volume_liquid": vf,
-        "specific_volume_vapor": vg
+        "specific_volume_liquid": round(vf, 6),
+        "specific_volume_vapor": round(vg, 6)
     }
 
 @app.get("/phase-change-diagram")
